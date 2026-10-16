@@ -2,7 +2,7 @@
 export const siteConfig = {
   name: "DELOWAR AL KHALIJ CO.",
   nameAr: "شركة ديلوار آل خليج",
-  url: "https://www.delowaralkhalij.com",
+  url: "https://delowaralkhalij.net",
   phone: "+966 55 821 2396",
   whatsapp: "966558212396", // international format, digits only
   email: "delowarcom.ksa@gmail.com",
