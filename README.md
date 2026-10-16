@@ -11,6 +11,8 @@ npm run build    # production build
 npm start        # serve the production build
 ```
 
+> The production build uses webpack (`next build --webpack`) instead of Next.js 16's default Turbopack: Turbopack's PostCSS/Tailwind worker process crashes in Hostinger's build environment ("node process exited before we could connect to it"). Requires Node.js 20.9+ (Hostinger: Node 22 recommended).
+
 ## Where to edit
 
 | What | File |
