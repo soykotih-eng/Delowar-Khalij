@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #141414;
+  --color-ink-soft: #2a2a2a;
+  --color-gold: #b08a4e;
+  --color-gold-dark: #8f6f3c;
+  --color-gold-light: #ede2cf;
+  --color-cream: #f7f4ef;
+  --color-sand: #efe9df;
+  --color-line: #e7e1d7;
+  --color-muted: #6f6a63;
+  /* Aluminium division (brand navy from the logo) */
+  --color-navy: #0b1a35;
+  --color-navy-2: #11264a;
+  --color-navy-3: #1b2d55;
+  --color-steel: #f3f5f9;
+  --color-paper: #f6f2e9;
+
+  --font-sans: var(--font-jakarta), var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
+
+  --animate-fade-in: fade-in 0.25s ease-out;
+  --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-kenburns: kenburns 9s ease-out forwards;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes kenburns {
+  from { transform: scale(1.08); }
+  to { transform: scale(1); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes grow {
+  from { width: 0; }
+  to { width: 100%; }
+}
+@keyframes ticker {
+  0%, 42% { transform: translateY(0); }
+  50%, 92% { transform: translateY(-50%); }
+  100% { transform: translateY(0); }
+}
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(36px); }
+  to { opacity: 1; transform: none; }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+  body {
+    background: #fff;
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Arabic: Cairo first, and never letter-space Arabic script. */
+  html[lang="ar"] body {
+    font-family: var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
+  }
+  html[dir="rtl"] * {
+    letter-spacing: 0 !important;
+  }
+  ::selection {
+    background: var(--color-gold);
+    color: #fff;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  dialog::backdrop {
+    background: rgb(0 0 0 / 0.6);
+    backdrop-filter: blur(3px);
+  }
+  dialog[open] {
+    animation: slide-up 0.25s ease-out;
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-bold tracking-[0.2em] text-gold uppercase;
+  }
+  .eyebrow::before {
+    content: "";
+    @apply h-px w-8 bg-current;
+  }
+  .heading {
+    @apply text-3xl font-extrabold tracking-tight text-balance sm:text-4xl lg:text-5xl;
+    line-height: 1.1;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  /* Use together with .btn, e.g. "btn btn-gold" */
+  .btn-gold {
+    @apply bg-gold text-white hover:bg-gold-dark;
+  }
+  .btn-dark {
+    @apply bg-ink text-white hover:bg-gold;
+  }
+  .btn-outline {
+    @apply border border-ink/15 text-ink hover:border-ink hover:bg-ink hover:text-white;
+  }
+  .btn-light {
+    @apply border border-white/40 text-white backdrop-blur-sm hover:bg-white hover:text-ink;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-gold focus:ring-2 focus:ring-gold/20;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-bold text-ink/80;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-white;
+  }
+  .prose-stone p {
+    @apply mb-4 leading-8 text-ink/75;
+  }
+  .prose-stone h2 {
+    @apply mt-10 mb-3 text-2xl font-extrabold tracking-tight;
+  }
+}
+
+/* ---------- Aluminium division ---------- */
+@utility blueprint {
+  background-color: var(--color-navy);
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+@utility grid-lines {
+  background-image:
+    linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+@utility blueprint-light {
+  background-color: var(--color-steel);
+  background-image:
+    linear-gradient(rgb(11 26 53 / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(11 26 53 / 0.055) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+@layer components {
+  .mono-label {
+    @apply font-mono text-[11px] font-medium tracking-[0.28em] uppercase;
+  }
+  /* Thin corner brackets around an image, like a viewfinder. */
+  .frame-corners {
+    @apply relative;
+  }
+  .frame-corners::before,
+  .frame-corners::after {
+    content: "";
+    @apply pointer-events-none absolute z-10 size-4 border-white/80;
+  }
+  .frame-corners::before {
+    @apply start-3 top-3 border-s-2 border-t-2;
+  }
+  .frame-corners::after {
+    @apply end-3 bottom-3 border-e-2 border-b-2;
+  }
+  .polaroid {
+    @apply relative bg-paper p-2.5 pb-4 shadow-[0_18px_40px_-12px_rgb(0_0_0/0.55)] transition duration-300 sm:p-3 sm:pb-5;
+  }
+  .polaroid-tape {
+    @apply absolute -top-3 left-1/2 h-6 w-20 -translate-x-1/2 rotate-[-2deg] bg-white/45 backdrop-blur-[2px];
+  }
+}
+/* Monospace fonts have no Arabic glyphs — use Cairo for technical labels on Arabic pages. */
+html[dir="rtl"] .mono-label,
+html[dir="rtl"] .font-mono {
+  font-family: var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
+}
+html[dir="rtl"] .mono-label {
+  font-size: 12px;
+  font-weight: 700;
+}
+.marquee-track {
+  animation: marquee 40s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Scroll-driven reveal: pure CSS, ignored by browsers without support. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Printing a quotation: only the #print-area portal (a direct child of <body>) is printed. */
+@media print {
+  body > :not(#print-area) {
+    display: none !important;
+  }
+  #print-area {
+    display: block !important;
+  }
+  body {
+    padding: 0 !important;
+  }
+}
