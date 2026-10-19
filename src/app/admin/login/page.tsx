@@ -50,7 +50,35 @@ export default async function LoginPage() {
     );
   } else {
     const status = await checkDatabase();
-    if (!status.ok) {
+    if (!status.ok && status.accessible) {
+      // Logged in to MySQL fine, but DB_NAME is not a database this user can open: show the right name.
+      notice = (
+        <SetupNotice title="Wrong database name (DB_NAME).">
+          <p>
+            <code className="font-bold">DB_NAME</code> is set to <code className="rounded bg-white px-1 font-bold">{status.configured}</code>, but
+            the database user <code className="rounded bg-white px-1 font-bold">{status.user}</code> cannot open it.
+          </p>
+          {status.accessible.length > 0 ? (
+            <p className="mt-2">
+              This user can open:{" "}
+              {status.accessible.map((name, i) => (
+                <span key={name}>
+                  {i > 0 && ", "}
+                  <code className="rounded bg-white px-1 font-bold">{name}</code>
+                </span>
+              ))}
+              . Put that exact name in <code className="font-bold">DB_NAME</code>.
+            </p>
+          ) : (
+            <p className="mt-2">
+              This user is not linked to any database. In hPanel → Databases → MySQL Databases, use the database name and user name that
+              are listed together on the same row (create a new one if needed), and put them in <code className="font-bold">DB_NAME</code> and{" "}
+              <code className="font-bold">DB_USER</code>.
+            </p>
+          )}
+        </SetupNotice>
+      );
+    } else if (!status.ok) {
       notice = (
         <SetupNotice title="Cannot connect to the database.">
           {errorHelp[status.code] ?? "Check the DB_ variables in Hostinger."} <span className="text-xs">(code {status.code})</span>

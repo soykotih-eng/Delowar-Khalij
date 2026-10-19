@@ -17,30 +17,80 @@ const REQUIRED_VARS = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "ADMIN_EM
 /** Names of setup variables that are empty — shown on the admin login page to help with setup. */
 export const missingSetupVars = () => REQUIRED_VARS.filter((key) => !process.env[key]?.trim());
 
-/** Tries the database connection; on failure returns the driver's error code (never the message). */
-export async function checkDatabase(): Promise<{ ok: true; admins: number } | { ok: false; code: string }> {
+export type DbCheck =
+  | { ok: true; admins: number }
+  | { ok: false; code: string; configured?: string; user?: string; accessible?: string[] };
+
+/** Tries the database connection; on failure returns the driver error code plus setup hints (never the password). */
+export async function checkDatabase(): Promise<DbCheck> {
   try {
     const rows = await query<RowDataPacket & { n: number }>("SELECT COUNT(*) AS n FROM admins");
     return { ok: true, admins: rows[0].n };
   } catch (error) {
-    const code = (error as { code?: string }).code ?? "UNKNOWN";
-    console.error("[db] Connection check failed:", code, (error as Error).message);
-    return { ok: false, code };
+    const err = error as Error & { code?: string; accessible?: string[] };
+    const code = err.code ?? "UNKNOWN";
+    console.error("[db] Connection check failed:", code, err.message);
+    return { ok: false, code, configured: env().database, user: env().user, accessible: err.accessible };
   }
 }
 
-type Store = { pool?: Pool; ready?: Promise<void> };
+type Store = { pool?: Pool; ready?: Promise<void>; database?: string };
 const store = globalThis as unknown as { __dakDb?: Store };
 const state: Store = (store.__dakDb ??= {});
 
+const env = () => ({
+  host: process.env.DB_HOST?.trim(),
+  port: Number(process.env.DB_PORT?.trim() || 3306),
+  user: process.env.DB_USER?.trim() ?? "",
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME?.trim() ?? "",
+});
+
+const SYSTEM_DATABASES = new Set(["information_schema", "mysql", "performance_schema", "sys"]);
+
+/**
+ * Picks the database to use. Hostinger names start with the account prefix (u123456789_), which is
+ * easy to leave out of DB_NAME, so "website" also matches "u123456789_website" when this user can open it.
+ * Any other mismatch is reported (with the databases this user can open) instead of guessed.
+ */
+async function resolveDatabase() {
+  const { host, port, user, password, database } = env();
+  const conn = await mysql.createConnection({ host, port, user, password }); // wrong user/password/host fails here
+  let accessible: string[];
+  try {
+    const [rows] = await conn.query<RowDataPacket[]>("SHOW DATABASES");
+    accessible = rows.map((r) => String(Object.values(r)[0])).filter((name) => !SYSTEM_DATABASES.has(name));
+  } catch {
+    return database; // listing not allowed: use DB_NAME as given
+  } finally {
+    await conn.end().catch(() => {});
+  }
+
+  const prefix = /^u\d+_/.exec(user)?.[0];
+  const candidates = [database, prefix && !database.startsWith(prefix) ? prefix + database : null].filter(Boolean) as string[];
+  for (const name of candidates) {
+    const match = accessible.find((a) => a === name) ?? accessible.find((a) => a.toLowerCase() === name.toLowerCase());
+    if (match) {
+      if (match !== database) console.warn(`[db] DB_NAME "${database}" not found — using "${match}".`);
+      return match;
+    }
+  }
+  throw Object.assign(new Error(`User "${user}" cannot open database "${database}"`), {
+    code: "ER_DBACCESS_DENIED_ERROR",
+    accessible,
+  });
+}
+
 function pool() {
   if (!isDbConfigured()) throw new Error("Database is not configured (DB_HOST, DB_USER, DB_NAME).");
+  if (!state.database) throw new Error("Database not resolved yet.");
+  const { host, port, user, password } = env();
   state.pool ??= mysql.createPool({
-    host: process.env.DB_HOST?.trim(),
-    port: Number(process.env.DB_PORT?.trim() || 3306),
-    user: process.env.DB_USER?.trim(),
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME?.trim(),
+    host,
+    port,
+    user,
+    password,
+    database: state.database,
     charset: "utf8mb4",
     connectionLimit: 5,
     decimalNumbers: true,
@@ -49,7 +99,10 @@ function pool() {
 }
 
 function ready() {
-  state.ready ??= migrate().catch((error) => {
+  state.ready ??= (async () => {
+    state.database ??= await resolveDatabase();
+    await migrate();
+  })().catch((error) => {
     state.ready = undefined; // retry on the next request
     throw error;
   });
