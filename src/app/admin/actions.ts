@@ -58,10 +58,16 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
 
   const email = text(form, "email", 190).toLowerCase();
   const password = String(form.get("password") ?? "");
-  const [admin] = await query<RowDataPacket & { id: number; password_hash: string }>(
-    "SELECT id, password_hash FROM admins WHERE email = ?",
-    [email],
-  );
+  let admin: (RowDataPacket & { id: number; password_hash: string }) | undefined;
+  try {
+    [admin] = await query<RowDataPacket & { id: number; password_hash: string }>(
+      "SELECT id, password_hash FROM admins WHERE email = ?",
+      [email],
+    );
+  } catch (error) {
+    console.error("[login] Database error:", error);
+    return { error: "Cannot reach the database right now. Please reload the page." };
+  }
   const valid = admin ? await bcrypt.compare(password, admin.password_hash) : false;
   if (!admin || !valid) {
     recordFailure(ip);

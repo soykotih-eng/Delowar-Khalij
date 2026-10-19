@@ -12,6 +12,23 @@ import { seedProducts } from "@/data/products";
  */
 export const isDbConfigured = () => Boolean(process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME);
 
+const REQUIRED_VARS = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME", "ADMIN_EMAIL", "ADMIN_PASSWORD"] as const;
+
+/** Names of setup variables that are empty — shown on the admin login page to help with setup. */
+export const missingSetupVars = () => REQUIRED_VARS.filter((key) => !process.env[key]?.trim());
+
+/** Tries the database connection; on failure returns the driver's error code (never the message). */
+export async function checkDatabase(): Promise<{ ok: true; admins: number } | { ok: false; code: string }> {
+  try {
+    const rows = await query<RowDataPacket & { n: number }>("SELECT COUNT(*) AS n FROM admins");
+    return { ok: true, admins: rows[0].n };
+  } catch (error) {
+    const code = (error as { code?: string }).code ?? "UNKNOWN";
+    console.error("[db] Connection check failed:", code, (error as Error).message);
+    return { ok: false, code };
+  }
+}
+
 type Store = { pool?: Pool; ready?: Promise<void> };
 const store = globalThis as unknown as { __dakDb?: Store };
 const state: Store = (store.__dakDb ??= {});
@@ -19,11 +36,11 @@ const state: Store = (store.__dakDb ??= {});
 function pool() {
   if (!isDbConfigured()) throw new Error("Database is not configured (DB_HOST, DB_USER, DB_NAME).");
   state.pool ??= mysql.createPool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER,
+    host: process.env.DB_HOST?.trim(),
+    port: Number(process.env.DB_PORT?.trim() || 3306),
+    user: process.env.DB_USER?.trim(),
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    database: process.env.DB_NAME?.trim(),
     charset: "utf8mb4",
     connectionLimit: 5,
     decimalNumbers: true,
