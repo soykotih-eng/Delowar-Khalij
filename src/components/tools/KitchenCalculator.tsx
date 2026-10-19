@@ -8,10 +8,12 @@ import { useStore } from "@/components/providers/StoreProvider";
 import { Field, QtyStepper } from "@/components/ui/Fields";
 import { finishes, origins } from "@/data/attributes";
 import { getCategory } from "@/data/categories";
-import { getProduct, kitchenMaterials, productImage } from "@/data/products";
+import { isKitchenMaterial } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { siteConfig } from "@/lib/config";
 import { fill, href, tr, type Dictionary } from "@/lib/i18n";
-import { cn, formatMoney, formatNumber, sendWhatsApp } from "@/lib/utils";
+import { cn, formatMoney, formatNumber } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 type Kind = "top" | "backsplash" | "edge";
 type Piece = { id: number; kind: Kind; length: number; width: number };
@@ -25,7 +27,11 @@ const initialPieces: Piece[] = [
 export function KitchenCalculator({ copy }: { copy: Dictionary["kitchen"] }) {
   const { lang, t } = useI18n();
   const { currency, toast } = useStore();
-  const [slug, setSlug] = useState("black-galaxy-granite");
+  const { products, getProduct } = useCatalog();
+  const kitchenMaterials = products.filter(isKitchenMaterial);
+  const [slug, setSlug] = useState(
+    () => kitchenMaterials.find((p) => p.slug === "black-galaxy-granite")?.slug ?? kitchenMaterials[0]?.slug ?? "",
+  );
   const [pieces, setPieces] = useState<Piece[]>(initialPieces);
   const [extra, setExtra] = useState(0);
 
@@ -61,14 +67,14 @@ export function KitchenCalculator({ copy }: { copy: Dictionary["kitchen"] }) {
 
   function send() {
     if (!material) return;
-    sendWhatsApp([
+    submitRequest({ type: "kitchen", lang, total, lines: [
       `*${copy.message} — ${siteConfig.name}*`,
       `${copy.material.select}: ${tr(material.name, lang)} (${material.sku})`,
       ...pieces.map((p) => `• ${pieceLabel[p.kind]}: ${p.length} × ${p.width} cm`),
       `${copy.qty.title}: ${formatNumber(qty, lang)}`,
       `${copy.breakdown.pricePerM2}: ${money(perM2)}`,
       `${copy.breakdown.totalValue}: ${money(total)}`,
-    ]);
+    ] });
     toast(t.sentWhatsApp);
   }
 
@@ -209,7 +215,7 @@ export function KitchenCalculator({ copy }: { copy: Dictionary["kitchen"] }) {
             </div>
             <span className="rounded-full bg-gold-light px-2.5 py-1 text-[10px] font-bold text-gold-dark">{copy.preview.badge}</span>
           </div>
-          <KitchenPreview image={material ? productImage(material.slug) : undefined} />
+          <KitchenPreview image={material?.image} />
         </section>
 
         <section className="rounded-3xl bg-cream p-6">

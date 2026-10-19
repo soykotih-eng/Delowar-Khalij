@@ -11,7 +11,8 @@ import { BrandIcon } from "@/components/ui/SocialIcons";
 import type { Product } from "@/data/products";
 import { siteConfig } from "@/lib/config";
 import { fill, tr, type Dictionary } from "@/lib/i18n";
-import { cn, sendWhatsApp, whatsappUrl } from "@/lib/utils";
+import { cn, whatsappUrl } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 import { AddToCart } from "./AddToCart";
 import { useProductActions } from "./ProductCard";
 
@@ -199,13 +200,13 @@ export function ProductTabs({
               onSubmit={(e) => {
                 e.preventDefault();
                 const data = new FormData(e.currentTarget);
-                sendWhatsApp([
+                submitRequest({ type: "review", lang, name: data.get("name"), email: data.get("email"), lines: [
                   `*${copy.reviewMessage} — ${siteConfig.name}*`,
                   `${name} (${product.sku})`,
                   `${"★".repeat(rating)}${"☆".repeat(5 - rating)}`,
                   `${data.get("review")}`,
                   `— ${data.get("name")} (${data.get("email")})`,
-                ]);
+                ] });
                 toast(t.sentWhatsApp);
                 e.currentTarget.reset();
               }}

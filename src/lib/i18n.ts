@@ -10,7 +10,8 @@ export type CommonDict = Dictionary["common"];
 export const isLocale = (value: string): value is Locale =>
   (locales as readonly string[]).includes(value);
 
-export const tr = (value: L, lang: Locale) => value[lang];
+/** Text in the active language, falling back to English when a translation was left empty. */
+export const tr = (value: L, lang: Locale) => value[lang] || value.en;
 
 /** Replace {placeholders} in a dictionary string. */
 export const fill = (text: string, vars: Record<string, string | number>) =>

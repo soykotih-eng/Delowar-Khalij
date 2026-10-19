@@ -7,10 +7,10 @@ import { Field } from "@/components/ui/Fields";
 import { BrandIcon } from "@/components/ui/SocialIcons";
 import { siteConfig } from "@/lib/config";
 import type { Dictionary } from "@/lib/i18n";
-import { sendWhatsApp } from "@/lib/utils";
+import { saveRequest, submitRequest } from "@/lib/requests";
 
 export function ContactForm({ copy }: { copy: Dictionary["contact"] }) {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const { toast } = useStore();
   const f = copy.form;
 
@@ -25,12 +25,21 @@ export function ContactForm({ copy }: { copy: Dictionary["contact"] }) {
       "",
       `${data.get("message")}`,
     ];
+    const request = {
+      type: "message" as const,
+      lang,
+      name: data.get("name"),
+      phone: data.get("phone"),
+      email: data.get("email"),
+      lines: [`*${copy.message} — ${data.get("subject")}*`, ...lines],
+    };
     if (via === "email") {
-      const subject = encodeURIComponent(`${copy.message}: ${data.get("subject")}`);
+      const ref = saveRequest(request);
+      const subject = encodeURIComponent(`${copy.message} ${ref}: ${data.get("subject")}`);
       window.location.href = `mailto:${siteConfig.email}?subject=${subject}&body=${encodeURIComponent(lines.join("\n"))}`;
       return;
     }
-    sendWhatsApp([`*${copy.message} — ${data.get("subject")}*`, ...lines]);
+    submitRequest(request);
     toast(t.sentWhatsApp);
   }
 

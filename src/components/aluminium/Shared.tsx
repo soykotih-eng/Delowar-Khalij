@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { aluImage, type AluWork } from "@/data/aluminium";
+import type { AluWork } from "@/data/aluminium";
 import { tr, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -56,7 +56,7 @@ export function Polaroid({
     <figure className={cn("polaroid rotate-(--r)", className)} style={{ "--r": `${rotate}deg` } as React.CSSProperties}>
       <span className="polaroid-tape" aria-hidden />
       <div className="relative overflow-hidden bg-navy-2" style={{ aspectRatio: `${work.w} / ${work.h}` }}>
-        <Image src={aluImage(work.slug)} alt={tr(work.title, lang)} fill sizes={sizes} priority={priority} className="object-cover" />
+        <Image src={work.image} alt={tr(work.title, lang)} fill sizes={sizes} priority={priority} className="object-cover" />
         {badge && (
           <span className="absolute start-2 top-2 hidden rounded-full bg-navy/80 px-2.5 py-1 font-mono text-[10px] text-white backdrop-blur sm:inline-block">
             {badge}

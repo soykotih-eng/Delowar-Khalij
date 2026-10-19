@@ -8,7 +8,8 @@ import { Search } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { Price } from "@/components/ui/Price";
 import { getCategory } from "@/data/categories";
-import { productImage, products, type Product } from "@/data/products";
+import type { Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { href, tr } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -23,13 +24,14 @@ export function matchesQuery(p: Product, query: string) {
 
 export function SearchBox({ autoFocus, className }: { autoFocus?: boolean; className?: string }) {
   const { lang, t } = useI18n();
+  const { products } = useCatalog();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
 
   const results = useMemo(
     () => (query.trim().length < 2 ? [] : products.filter((p) => matchesQuery(p, query)).slice(0, 6)),
-    [query],
+    [query, products],
   );
   const showResults = focused && query.trim().length >= 2;
 
@@ -74,7 +76,7 @@ export function SearchBox({ autoFocus, className }: { autoFocus?: boolean; class
                     href={href(lang, `/product/${p.slug}`)}
                     className="flex items-center gap-3 p-3 transition hover:bg-cream"
                   >
-                    <Image src={productImage(p.slug)} alt="" width={48} height={48} className="size-12 rounded-lg object-cover" />
+                    <Image src={p.image} alt="" width={48} height={48} className="size-12 rounded-lg object-cover" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">{tr(p.name, lang)}</span>
                       <Price product={p} className="text-xs" />

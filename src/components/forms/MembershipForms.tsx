@@ -8,10 +8,10 @@ import { useStore } from "@/components/providers/StoreProvider";
 import { Field } from "@/components/ui/Fields";
 import { siteConfig } from "@/lib/config";
 import { href, type Dictionary } from "@/lib/i18n";
-import { sendWhatsApp } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 export function SupplierForm({ copy }: { copy: Dictionary["join"]["form"] }) {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const { toast } = useStore();
 
   return (
@@ -21,7 +21,7 @@ export function SupplierForm({ copy }: { copy: Dictionary["join"]["form"] }) {
       onSubmit={(e) => {
         e.preventDefault();
         const data = new FormData(e.currentTarget);
-        sendWhatsApp([
+        submitRequest({ type: "supplier", lang, name: data.get("contact"), phone: data.get("phone"), email: data.get("email"), location: data.get("city"), lines: [
           `*${copy.message} — ${siteConfig.name}*`,
           `${copy.company}: ${data.get("company")}`,
           `${copy.contact}: ${data.get("contact")}`,
@@ -31,7 +31,7 @@ export function SupplierForm({ copy }: { copy: Dictionary["join"]["form"] }) {
           `${copy.activity}: ${data.get("activity")}`,
           `${copy.materials}: ${data.get("materials")}`,
           data.get("cr") && `${copy.cr}: ${data.get("cr")}`,
-        ]);
+        ] });
         toast(t.sentWhatsApp);
       }}
     >
@@ -120,12 +120,12 @@ export function AccountForms({ copy }: { copy: Dictionary["account"] }) {
           onSubmit={(e) => {
             e.preventDefault();
             const data = new FormData(e.currentTarget);
-            sendWhatsApp([
+            submitRequest({ type: "customer", lang, name: data.get("name"), phone: data.get("phone"), email: data.get("email"), lines: [
               `*${copy.register.message} — ${siteConfig.name}*`,
               `${copy.register.name}: ${data.get("name")}`,
               `${copy.register.phone}: ${data.get("phone")}`,
               `${copy.register.email}: ${data.get("email")}`,
-            ]);
+            ] });
             toast(t.sentWhatsApp);
           }}
         >

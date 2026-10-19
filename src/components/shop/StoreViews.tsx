@@ -10,11 +10,13 @@ import { ProductCard } from "@/components/product/ProductCard";
 import { Field, QtyStepper } from "@/components/ui/Fields";
 import { Money, Price } from "@/components/ui/Price";
 import { units } from "@/data/attributes";
-import { getProduct, productImage, type Product } from "@/data/products";
+import type { Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { siteConfig } from "@/lib/config";
 import { fill, href, tr, type Dictionary } from "@/lib/i18n";
 import { productSpecs } from "@/lib/product-specs";
-import { formatMoney, formatNumber, sendWhatsApp } from "@/lib/utils";
+import { formatMoney, formatNumber } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 function EmptyState({ icon: Icon, text, cta }: { icon: typeof Heart; text: string; cta: string }) {
   const { lang } = useI18n();
@@ -33,11 +35,15 @@ function EmptyState({ icon: Icon, text, cta }: { icon: typeof Heart; text: strin
 
 const Loading = () => <div className="h-72 animate-pulse rounded-3xl bg-cream" />;
 
-const resolve = (slugs: string[]) => slugs.map(getProduct).filter((p): p is Product => !!p);
+const useResolve = () => {
+  const { getProduct } = useCatalog();
+  return (slugs: string[]) => slugs.map(getProduct).filter((p): p is Product => !!p);
+};
 
 export function CartView({ copy }: { copy: Dictionary["cart"] }) {
   const { lang, t } = useI18n();
   const store = useStore();
+  const { getProduct } = useCatalog();
   const money = (v: number) => formatMoney(v, store.currency, lang);
 
   if (!store.hydrated) return <Loading />;
@@ -53,7 +59,7 @@ export function CartView({ copy }: { copy: Dictionary["cart"] }) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const c = copy.checkout;
-    sendWhatsApp([
+    submitRequest({ type: "order", lang, name: data.get("name"), phone: data.get("phone"), location: data.get("address"), total: store.cartTotal, lines: [
       `*${copy.message} — ${siteConfig.name}*`,
       ...lines.map(
         (l) =>
@@ -68,7 +74,7 @@ export function CartView({ copy }: { copy: Dictionary["cart"] }) {
       `${c.phone}: ${data.get("phone")}`,
       `${c.address}: ${data.get("address")}`,
       data.get("notes") && `${c.notes}: ${data.get("notes")}`,
-    ]);
+    ] });
     store.toast(t.sentWhatsApp);
   }
 
@@ -88,7 +94,7 @@ export function CartView({ copy }: { copy: Dictionary["cart"] }) {
             return (
               <li key={product.slug} className="grid grid-cols-[80px_1fr] gap-4 py-5 md:grid-cols-[1fr_120px_150px_120px_40px] md:items-center">
                 <div className="flex items-center gap-4 md:col-span-1">
-                  <Image src={productImage(product.slug)} alt="" width={80} height={80} className="size-20 rounded-xl object-cover" />
+                  <Image src={product.image} alt="" width={80} height={80} className="size-20 rounded-xl object-cover" />
                   <div className="hidden md:block">
                     <Link href={href(lang, `/product/${product.slug}`)} className="font-extrabold hover:text-gold">
                       {tr(product.name, lang)}
@@ -176,6 +182,7 @@ export function CartView({ copy }: { copy: Dictionary["cart"] }) {
 
 export function WishlistView({ copy }: { copy: Dictionary["wishlist"] }) {
   const store = useStore();
+  const resolve = useResolve();
   if (!store.hydrated) return <Loading />;
   const items = resolve(store.wishlist);
   if (!items.length) return <EmptyState icon={Heart} text={copy.empty} cta={copy.browse} />;
@@ -198,6 +205,7 @@ export function WishlistView({ copy }: { copy: Dictionary["wishlist"] }) {
 export function CompareView({ copy }: { copy: Dictionary["compare"] }) {
   const { lang, t } = useI18n();
   const store = useStore();
+  const resolve = useResolve();
   if (!store.hydrated) return <Loading />;
   const items = resolve(store.compare);
   if (!items.length) return <EmptyState icon={ArrowLeftRight} text={copy.empty} cta={copy.browse} />;
@@ -221,7 +229,7 @@ export function CompareView({ copy }: { copy: Dictionary["compare"] }) {
                     <button type="button" onClick={() => store.toggleCompare(p.slug)} aria-label={copy.remove} className="absolute end-2 top-2 z-10 grid size-8 place-items-center rounded-full bg-white shadow hover:bg-ink hover:text-white">
                       <X className="size-4" />
                     </button>
-                    <Image src={productImage(p.slug)} alt="" width={240} height={240} className="aspect-square w-full rounded-2xl object-cover" />
+                    <Image src={p.image} alt="" width={240} height={240} className="aspect-square w-full rounded-2xl object-cover" />
                   </div>
                   <Link href={href(lang, `/product/${p.slug}`)} className="mt-3 block text-base font-extrabold hover:text-gold">
                     {tr(p.name, lang)}

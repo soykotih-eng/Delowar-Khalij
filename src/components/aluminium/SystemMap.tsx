@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useI18n } from "@/components/providers/I18nProvider";
-import { aluHotspots, aluImage, getAluWork } from "@/data/aluminium";
+import { aluHotspots, aluImage, getSeedWork } from "@/data/aluminium";
 import { tr, type Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Polaroid } from "./Shared";
@@ -73,7 +73,7 @@ export function SystemMap({ copy }: { copy: Dictionary["aluminium"]["systemMap"]
             <p className="mt-4 leading-7 text-navy/65">{tr(spot.text, lang)}</p>
           </div>
           <div className="px-4 sm:px-0">
-            <Polaroid work={getAluWork(spot.work)} lang={lang} rotate={2} sizes="300px" badge={copy.realWork} />
+            <Polaroid work={getSeedWork(spot.work)} lang={lang} rotate={2} sizes="300px" badge={copy.realWork} />
           </div>
         </div>
       </div>

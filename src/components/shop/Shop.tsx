@@ -11,7 +11,8 @@ import { matchesQuery } from "@/components/layout/SearchBox";
 import { CloseButton, Modal } from "@/components/ui/Modal";
 import { colors, finishes, origins, usages } from "@/data/attributes";
 import { categoryGroups, childCategories } from "@/data/categories";
-import { products, productsInCategory, type Product } from "@/data/products";
+import { inCategory, type Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { siteConfig } from "@/lib/config";
 import { fill, href, tr, type Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,8 @@ function SearchParamReader({ onChange }: { onChange: (q: string) => void }) {
 export function Shop({ categorySlug, copy }: { categorySlug?: string; copy: Dictionary["shop"] }) {
   const { lang, t } = useI18n();
   const { currency } = useStore();
+  const { products } = useCatalog();
+  const productsInCategory = (slug: string) => inCategory(products, slug);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [priceInput, setPriceInput] = useState({ min: "", max: "" });
@@ -59,7 +62,7 @@ export function Shop({ categorySlug, copy }: { categorySlug?: string; copy: Dict
 
   const base = useMemo(
     () => (categorySlug ? productsInCategory(categorySlug) : products).filter((p) => matchesQuery(p, query)),
-    [categorySlug, query],
+    [categorySlug, query, products],
   );
 
   const facets = useMemo(() => {

@@ -3,11 +3,11 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, BadgeCheck, CircleCheck, Gem, Layers, Ruler, ShieldCheck, Truck, Wrench, Store } from "lucide-react";
 import { Polaroid } from "@/components/aluminium/Shared";
 import { PostCard } from "@/components/blog/PostCard";
-import { getAluWork } from "@/data/aluminium";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { getCategory } from "@/data/categories";
 import { posts } from "@/data/posts";
-import { productsInCategory } from "@/data/products";
+import { inCategory } from "@/data/products";
+import { getCatalog } from "@/lib/catalog";
 import { siteConfig } from "@/lib/config";
 import { fill, href, tr, type Dictionary, type Locale } from "@/lib/i18n";
 import { cn, formatMoney, whatsappUrl } from "@/lib/utils";
@@ -126,7 +126,8 @@ export function WhyUs({ d }: SectionProps) {
   );
 }
 
-export function CategoryTiles({ lang, d }: SectionProps) {
+export async function CategoryTiles({ lang, d }: SectionProps) {
+  const { products } = await getCatalog();
   const c = d.home.categories;
   const tiles = ["marble", "granite", "quartz", "limestone", "stone-products"].map((slug) => getCategory(slug)!);
   return (
@@ -147,7 +148,7 @@ export function CategoryTiles({ lang, d }: SectionProps) {
             <span className="absolute end-5 top-5 grid size-11 place-items-center rounded-full bg-white/15 backdrop-blur transition group-hover:bg-gold">
               <ArrowUpRight className="size-5 rtl:-scale-x-100" />
             </span>
-            <p className="text-xs font-bold text-white/70">{fill(c.count, { n: productsInCategory(cat.slug).length })}</p>
+            <p className="text-xs font-bold text-white/70">{fill(c.count, { n: inCategory(products, cat.slug).length })}</p>
             <h3 className={cn("mt-1 font-extrabold tracking-tight", i === 0 ? "text-3xl sm:text-4xl" : "text-lg sm:text-2xl")}>{tr(cat.name, lang)}</h3>
             {i === 0 && <p className="mt-2 hidden max-w-md text-sm text-white/75 sm:block">{tr(cat.description, lang)}</p>}
           </Link>
@@ -158,9 +159,10 @@ export function CategoryTiles({ lang, d }: SectionProps) {
 }
 
 /** Home-page highlight for the aluminium & glass division. */
-export function AluminiumBand({ lang, d }: SectionProps) {
+export async function AluminiumBand({ lang, d }: SectionProps) {
   const b = d.aluminium.band;
-  const picks = ["black-glass-curtain-wall", "arched-entrance-door", "clear-shower-marble-bench"].map(getAluWork);
+  // The three most recent works, so daily uploads from the admin panel show up on the home page.
+  const picks = (await getCatalog()).works.slice(0, 3);
   const layout = [
     { rotate: -4, className: "mt-10" },
     { rotate: 3, className: "" },

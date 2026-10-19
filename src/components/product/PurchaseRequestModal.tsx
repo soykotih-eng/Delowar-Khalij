@@ -8,10 +8,12 @@ import { useStore } from "@/components/providers/StoreProvider";
 import { Field } from "@/components/ui/Fields";
 import { CloseButton, Modal } from "@/components/ui/Modal";
 import { Price } from "@/components/ui/Price";
-import { getProduct, productImage, type Product } from "@/data/products";
+import type { Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { siteConfig } from "@/lib/config";
 import { fill, tr } from "@/lib/i18n";
-import { cn, formatMoney, formatNumber, sendWhatsApp } from "@/lib/utils";
+import { cn, formatMoney, formatNumber } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 type InstallType = "floors" | "walls-dry" | "walls-wet" | "stairs";
 
@@ -42,7 +44,7 @@ function PurchaseForm({ product, onClose }: { product: Product; onClose: () => v
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-    sendWhatsApp([
+    submitRequest({ type: "purchase", lang, name: data.get("name"), phone: data.get("phone"), email: data.get("email"), location: data.get("address"), total, lines: [
       `*${pr.message} — ${siteConfig.name}*`,
       `${tr(product.name, lang)} (${product.sku})`,
       `${pr.serviceType}: ${service === "supply" ? pr.supplyOnly : pr.supplyInstall}`,
@@ -55,7 +57,7 @@ function PurchaseForm({ product, onClose }: { product: Product; onClose: () => v
       `${pr.address}: ${data.get("address")}`,
       data.get("email") && `${pr.email}: ${data.get("email")}`,
       data.get("notes") && `${pr.notes}: ${data.get("notes")}`,
-    ]);
+    ] });
     toast(t.sentWhatsApp);
     onClose();
   }
@@ -71,7 +73,7 @@ function PurchaseForm({ product, onClose }: { product: Product; onClose: () => v
       </div>
 
       <div className="mt-6 flex items-center gap-4 rounded-2xl bg-cream p-3">
-        <Image src={productImage(product.slug)} alt="" width={64} height={64} className="size-16 rounded-xl object-cover" />
+        <Image src={product.image} alt="" width={64} height={64} className="size-16 rounded-xl object-cover" />
         <div>
           <p className="font-extrabold">{tr(product.name, lang)}</p>
           <p className="text-xs text-muted">{product.sku}</p>
@@ -199,6 +201,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export function PurchaseRequestModal() {
   const { t } = useI18n();
   const { purchase, setPurchase } = useStore();
+  const { getProduct } = useCatalog();
   const product = purchase ? getProduct(purchase) : undefined;
   const close = () => setPurchase(null);
 

@@ -17,11 +17,16 @@ export type Product = {
   inStock: boolean;
   featured?: boolean;
   short: L;
+  image: string; // "/images/products/…" for the starter catalogue, "/media/<id>" for uploads
 };
 
 export const productImage = (slug: string) => `/images/products/${slug}.webp`;
 
-export const products: Product[] = [
+/**
+ * Starter catalogue. It is copied into the database on first start, and used as-is when no
+ * database is configured. Day-to-day changes are made in the admin panel (/admin), not here.
+ */
+const seed: Omit<Product, "image">[] = [
   // Marble
   {
     slug: "statuario-white", sku: "DK-MRB-101", category: "marble", origin: "italy", color: "white", finish: "polished",
@@ -231,13 +236,15 @@ export const products: Product[] = [
   },
 ];
 
-export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
+export const seedProducts: Product[] = seed.map((p) => ({ ...p, image: productImage(p.slug) }));
 
-export const productsInCategory = (slug: string) => {
+// Helpers work on whichever list is live (database or seed), passed in by the caller.
+export const findProduct = (list: Product[], slug: string) => list.find((p) => p.slug === slug);
+
+export const inCategory = (list: Product[], slug: string) => {
   const leaves = leafSlugs(slug);
-  return products.filter((p) => leaves.includes(p.category));
+  return list.filter((p) => leaves.includes(p.category));
 };
 
 /** Priced slabs that can be used for kitchen worktops. */
-export const kitchenMaterials = products.filter((p) => p.price !== null && p.usage.includes("kitchens"));
-export const pricedProducts = products.filter((p) => p.price !== null);
+export const isKitchenMaterial = (p: Product) => p.price !== null && p.usage.includes("kitchens");

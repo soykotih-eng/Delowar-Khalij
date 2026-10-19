@@ -9,6 +9,8 @@ export type AluWork = {
   category: AluCategory;
   title: L;
   system: L;
+  image: string; // "/images/aluminium/…" for the starter photos, "/media/<id>" for uploads
+  featured?: boolean;
 };
 
 export type AluService = {
@@ -32,7 +34,8 @@ export const aluCategories: Record<AluCategory, L> = {
 };
 
 // Photos of our installations (enhanced copies live in /public/images/aluminium).
-export const aluWorks: AluWork[] = [
+// Starter photos: copied into the database on first start; new work is uploaded in /admin.
+const seedWorks: Omit<AluWork, "image">[] = [
   { slug: "palace-facade-glazing", w: 1210, h: 820, category: "facades", title: { en: "Palace Facade Glazing", ar: "زجاج واجهة قصر" }, system: { en: "Curtain wall · strip windows", ar: "كرتن وول · نوافذ طولية" } },
   { slug: "black-glass-curtain-wall", w: 870, h: 1010, category: "facades", title: { en: "Black Glass Curtain Wall", ar: "كرتن وول بزجاج أسود" }, system: { en: "Structural glazing · black reflective", ar: "زجاج إنشائي · أسود عاكس" } },
   { slug: "clear-shower-marble-bench", w: 960, h: 1220, category: "glass-interiors", title: { en: "Clear Shower with Marble Bench", ar: "شاور شفاف مع مقعد رخام" }, system: { en: "Frameless · clear tempered glass", ar: "بدون إطار · سيكوريت شفاف" } },
@@ -59,7 +62,16 @@ export const aluWorks: AluWork[] = [
   { slug: "frosted-shower-freestanding-bath", w: 960, h: 1240, category: "glass-interiors", title: { en: "Frosted Shower & Freestanding Bath", ar: "شاور مطفي مع بانيو" }, system: { en: "Hinged · frosted tempered glass", ar: "مفصلي · سيكوريت مطفي" } },
 ];
 
-export const getAluWork = (slug: string) => aluWorks.find((w) => w.slug === slug)!;
+const featuredSeed = ["palace-facade-glazing", "curved-bay-glazing", "pool-house-glass-front", "clear-shower-marble-bench"];
+
+export const seedAluWorks: AluWork[] = seedWorks.map((w) => ({
+  ...w,
+  image: aluImage(w.slug),
+  featured: featuredSeed.includes(w.slug),
+}));
+
+/** Starter work by slug — used by fixed page elements (system map) that must never disappear. */
+export const getSeedWork = (slug: string) => seedAluWorks.find((w) => w.slug === slug)!;
 
 export const aluServices: AluService[] = [
   {
@@ -164,8 +176,3 @@ export const aluHotspots: AluHotspot[] = [
     text: { en: "Floor-to-ceiling corner glazing for majlis, lounges and pool houses.", ar: "زجاج من الأرض للسقف في الزوايا للمجالس والاستراحات وبيوت المسابح." },
   },
 ];
-
-export const aluFeatured = {
-  main: "palace-facade-glazing",
-  side: ["curved-bay-glazing", "pool-house-glass-front", "clear-shower-marble-bench"],
-};

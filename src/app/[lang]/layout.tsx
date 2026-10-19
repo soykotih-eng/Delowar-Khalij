@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Cairo, Plus_Jakarta_Sans } from "next/font/google";
 import { notFound } from "next/navigation";
 import "../globals.css";
 import { Footer } from "@/components/layout/Footer";
@@ -7,16 +6,16 @@ import { Header, TopStrip } from "@/components/layout/Header";
 import { MobileBottomBar } from "@/components/layout/MobileBottomBar";
 import { PurchaseRequestModal } from "@/components/product/PurchaseRequestModal";
 import { QuickViewModal } from "@/components/product/QuickViewModal";
+import { CatalogProvider } from "@/components/providers/CatalogProvider";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 import { StoreProvider } from "@/components/providers/StoreProvider";
 import { BrandIcon } from "@/components/ui/SocialIcons";
+import { getCatalog } from "@/lib/catalog";
 import { siteConfig } from "@/lib/config";
 import { getDictionary } from "@/lib/dictionaries";
+import { cairo, jakarta } from "@/lib/fonts";
 import { isLocale, locales } from "@/lib/i18n";
 import { whatsappUrl } from "@/lib/utils";
-
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
-const cairo = Cairo({ subsets: ["arabic", "latin"], variable: "--font-cairo", display: "swap", preload: false });
 
 export const dynamicParams = false;
 export const generateStaticParams = () => locales.map((lang) => ({ lang }));
@@ -47,11 +46,13 @@ export default async function RootLayout({ children, params }: Props) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
   const d = getDictionary(lang);
+  const { products, works } = await getCatalog();
 
   return (
     <html lang={lang} dir={lang === "ar" ? "rtl" : "ltr"} className={`${jakarta.variable} ${cairo.variable}`}>
       <body className="min-h-dvh pb-16 lg:pb-0">
         <I18nProvider lang={lang} t={d.common}>
+          <CatalogProvider products={products} works={works}>
           <StoreProvider>
             <TopStrip />
             <Header />
@@ -71,6 +72,7 @@ export default async function RootLayout({ children, params }: Props) {
             <QuickViewModal />
             <PurchaseRequestModal />
           </StoreProvider>
+          </CatalogProvider>
         </I18nProvider>
       </body>
     </html>

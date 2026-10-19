@@ -10,28 +10,36 @@ import { Logo } from "@/components/ui/Logo";
 import { CloseButton, Modal } from "@/components/ui/Modal";
 import { BrandIcon } from "@/components/ui/SocialIcons";
 import { categoryGroups, childCategories } from "@/data/categories";
-import { getProduct, pricedProducts } from "@/data/products";
+import type { Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { siteConfig } from "@/lib/config";
 import { fill, tr, type Dictionary } from "@/lib/i18n";
-import { formatDate, formatMoney, formatNumber, sendWhatsApp } from "@/lib/utils";
+import { formatDate, formatMoney, formatNumber } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 type Mode = "supply" | "install";
 type Item = { id: number; slug: string; area: number; mode: Mode };
 type Client = { name: string; phone: string; project: string };
 type Copy = Dictionary["estimate"];
 
-const unitPrice = (item: Item) =>
-  (getProduct(item.slug)?.price ?? 0) + (item.mode === "install" ? siteConfig.installationRate : 0);
-const lineTotal = (item: Item) => Math.max(0, item.area) * unitPrice(item);
+/** Price helpers bound to the live catalog. */
+function usePricing() {
+  const { products, getProduct } = useCatalog();
+  const unitPrice = (item: Item) =>
+    (getProduct(item.slug)?.price ?? 0) + (item.mode === "install" ? siteConfig.installationRate : 0);
+  const lineTotal = (item: Item) => Math.max(0, item.area) * unitPrice(item);
+  const pricedProducts = products.filter((p: Product) => p.price !== null);
+  return { getProduct, unitPrice, lineTotal, pricedProducts };
+}
 
 export function ProjectEstimator({ copy }: { copy: Copy }) {
   const { lang, t } = useI18n();
   const { currency, toast } = useStore();
+  const { getProduct, unitPrice, lineTotal, pricedProducts } = usePricing();
   const [client, setClient] = useState<Client>({ name: "", phone: "", project: "" });
-  const [items, setItems] = useState<Item[]>([
-    { id: 1, slug: "carrara-white", area: 40, mode: "install" },
-    { id: 2, slug: "black-galaxy-granite", area: 8, mode: "supply" },
-  ]);
+  const [items, setItems] = useState<Item[]>(() =>
+    pricedProducts.slice(0, 2).map((p, i) => ({ id: i + 1, slug: p.slug, area: i === 0 ? 40 : 8, mode: i === 0 ? "install" : "supply" })),
+  );
   const [quote, setQuote] = useState<{ number: string; date: Date } | null>(null);
 
   const money = (v: number) => formatMoney(v, currency, lang);
@@ -45,14 +53,14 @@ export function ProjectEstimator({ copy }: { copy: Copy }) {
 
   function sendQuote() {
     if (!quote) return;
-    sendWhatsApp([
+    submitRequest({ type: "estimate", lang, name: client.name, phone: client.phone, location: client.project, total, lines: [
       `*${copy.message} — ${siteConfig.name}*`,
       `${copy.quote.number}: ${quote.number}`,
       `${copy.quote.client}: ${client.name} · ${client.phone}`,
       `${copy.quote.project}: ${client.project}`,
-      ...items.map((i) => `• ${tr(getProduct(i.slug)!.name, lang)} — ${i.area} m² — ${i.mode === "supply" ? copy.items.supply : copy.items.supplyInstall} — ${money(lineTotal(i))}`),
+      ...items.map((i) => `• ${getProduct(i.slug) ? tr(getProduct(i.slug)!.name, lang) : i.slug} — ${i.area} m² — ${i.mode === "supply" ? copy.items.supply : copy.items.supplyInstall} — ${money(lineTotal(i))}`),
       `${copy.total}: ${money(total)}`,
-    ]);
+    ] });
     toast(t.sentWhatsApp);
   }
 
@@ -133,6 +141,7 @@ export function ProjectEstimator({ copy }: { copy: Copy }) {
             </div>
             <button
               type="button"
+              disabled={!pricedProducts.length}
               onClick={() => setItems((list) => [...list, { id: Date.now(), slug: pricedProducts[0].slug, area: 10, mode: "supply" }])}
               className="btn btn-outline mt-4 px-4 py-2.5 text-xs"
             >
@@ -206,6 +215,7 @@ function QuoteDocument({
 }) {
   const { lang } = useI18n();
   const { currency } = useStore();
+  const { getProduct, unitPrice, lineTotal } = usePricing();
   const q = copy.quote;
   const money = (v: number) => formatMoney(v, currency, lang);
   const validUntil = new Date(quote.date.getTime() + siteConfig.quoteValidityDays * 86_400_000);
@@ -260,7 +270,8 @@ function QuoteDocument({
         </thead>
         <tbody className="divide-y divide-line">
           {items.map((item, i) => {
-            const product = getProduct(item.slug)!;
+            const product = getProduct(item.slug);
+            if (!product) return null;
             return (
               <tr key={item.id}>
                 <td className="p-3">{i + 1}</td>

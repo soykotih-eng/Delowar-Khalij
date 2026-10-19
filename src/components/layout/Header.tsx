@@ -22,7 +22,8 @@ import { CloseButton, Modal } from "@/components/ui/Modal";
 import { Money } from "@/components/ui/Price";
 import { BrandIcon } from "@/components/ui/SocialIcons";
 import { categoryGroups, childCategories } from "@/data/categories";
-import { productsInCategory } from "@/data/products";
+import { inCategory } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { siteConfig } from "@/lib/config";
 import { fill, href, tr } from "@/lib/i18n";
 import { cn, formatMoney, telUrl, whatsappUrl } from "@/lib/utils";
@@ -89,6 +90,7 @@ function IconLink({
 export function Header() {
   const { lang, t } = useI18n();
   const { cartCount, cartTotal, wishlist, compare } = useStore();
+  const { products } = useCatalog();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -200,7 +202,7 @@ export function Header() {
                         <span>
                           <span className="block text-sm font-bold">{tr(c.name, lang)}</span>
                           <span className="block text-xs font-medium text-muted">
-                            {fill(t.productsCount, { n: productsInCategory(c.slug).length })}
+                            {fill(t.productsCount, { n: inCategory(products, c.slug).length })}
                           </span>
                         </span>
                       </Link>

@@ -8,7 +8,8 @@ import { CloseButton, Modal } from "@/components/ui/Modal";
 import { aluServices } from "@/data/aluminium";
 import { siteConfig } from "@/lib/config";
 import { tr, type Dictionary } from "@/lib/i18n";
-import { cn, sendWhatsApp } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 type FormCopy = Dictionary["aluminium"]["form"];
 const QuoteContext = createContext<(service?: string) => void>(() => {});
@@ -24,7 +25,7 @@ export function AluQuoteProvider({ copy, children }: { copy: FormCopy; children:
     e.preventDefault();
     const d = new FormData(e.currentTarget);
     const s = aluServices.find((x) => x.key === d.get("service"));
-    sendWhatsApp([
+    submitRequest({ type: "aluminium", lang, name: d.get("name"), phone: d.get("phone"), location: d.get("location"), lines: [
       `*${copy.message} — ${siteConfig.name}*`,
       `${copy.service}: ${s ? tr(s.title, lang) : "—"}`,
       `${copy.projectType}: ${d.get("type")}`,
@@ -35,7 +36,7 @@ export function AluQuoteProvider({ copy, children }: { copy: FormCopy; children:
       "",
       `${copy.name}: ${d.get("name")}`,
       `${copy.phone}: ${d.get("phone")}`,
-    ]);
+    ] });
     toast(t.sentWhatsApp);
     close();
   }

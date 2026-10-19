@@ -9,7 +9,7 @@ import { CloseButton, Modal } from "@/components/ui/Modal";
 import { services, type Service } from "@/data/services";
 import { siteConfig } from "@/lib/config";
 import { tr, type Dictionary } from "@/lib/i18n";
-import { sendWhatsApp } from "@/lib/utils";
+import { submitRequest } from "@/lib/requests";
 
 const icons: Record<Service["icon"], typeof Search> = {
   search: Search, truck: Truck, stamp: Stamp, container: Container, package: Package,
@@ -70,14 +70,14 @@ export function ServicesGrid({ copy }: { copy: Copy }) {
             onSubmit={(e) => {
               e.preventDefault();
               const data = new FormData(e.currentTarget);
-              sendWhatsApp([
+              submitRequest({ type: "service", lang, name: data.get("name"), phone: data.get("phone"), location: data.get("location"), lines: [
                 `*${m.message} — ${siteConfig.name}*`,
                 `${m.service}: ${serviceName(String(data.get("service")))}`,
                 `${m.name}: ${data.get("name")}`,
                 `${m.phone}: ${data.get("phone")}`,
                 `${m.location}: ${data.get("location")}`,
                 `${m.details}: ${data.get("details")}`,
-              ]);
+              ] });
               toast(t.sentWhatsApp);
               setSelected(null);
             }}

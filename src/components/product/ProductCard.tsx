@@ -8,7 +8,7 @@ import { useStore } from "@/components/providers/StoreProvider";
 import { Price } from "@/components/ui/Price";
 import { colors, origins } from "@/data/attributes";
 import { getCategory } from "@/data/categories";
-import { productImage, type Product } from "@/data/products";
+import type { Product } from "@/data/products";
 import { href, tr } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,7 @@ export function ProductCard({ product, view = "grid", priority }: { product: Pro
     <div className={cn("relative overflow-hidden rounded-2xl bg-sand", view === "grid" ? "aspect-square" : "aspect-square w-36 shrink-0 sm:w-56")}>
       <Link href={url} aria-label={name}>
         <Image
-          src={productImage(product.slug)}
+          src={product.image}
           alt={name}
           fill
           priority={priority}

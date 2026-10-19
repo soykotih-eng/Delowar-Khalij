@@ -6,20 +6,23 @@ import { ArrowRight } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { products, productsInCategory } from "@/data/products";
+import { inCategory, type Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { href, type Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const tabs = {
+const buildTabs = (products: Product[]) => ({
   featured: products.filter((p) => p.featured),
-  marble: productsInCategory("marble"),
-  granite: productsInCategory("granite"),
-  stoneProducts: productsInCategory("stone-products"),
-};
-type Tab = keyof typeof tabs;
+  marble: inCategory(products, "marble"),
+  granite: inCategory(products, "granite"),
+  stoneProducts: inCategory(products, "stone-products"),
+});
+type Tab = keyof ReturnType<typeof buildTabs>;
 
 export function FeaturedProducts({ copy }: { copy: Dictionary["home"]["products"] }) {
   const { lang } = useI18n();
+  const { products } = useCatalog();
+  const tabs = buildTabs(products);
   const [tab, setTab] = useState<Tab>("featured");
 
   return (

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { CircleCheck } from "lucide-react";
 import { siteConfig, type Currency } from "@/lib/config";
-import { getProduct } from "@/data/products";
+import { useCatalog } from "./CatalogProvider";
 
 type CartLine = { slug: string; qty: number };
 type PersistedState = { cart: CartLine[]; wishlist: string[]; compare: string[]; currency: Currency };
@@ -14,6 +14,7 @@ const MAX_COMPARE = 4;
 const initialState: PersistedState = { cart: [], wishlist: [], compare: [], currency: "SAR" };
 
 function useStoreValue() {
+  const { getProduct } = useCatalog();
   const [state, setState] = useState<PersistedState>(initialState);
   const [hydrated, setHydrated] = useState(false);
   const [quickView, setQuickView] = useState<string | null>(null);
@@ -98,7 +99,7 @@ function useStoreValue() {
         const price = getProduct(line.slug)?.price;
         return sum + (price ? price * line.qty : 0);
       }, 0),
-    [state.cart],
+    [state.cart, getProduct],
   );
 
   return {

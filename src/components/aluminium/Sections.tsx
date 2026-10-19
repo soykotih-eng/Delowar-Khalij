@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { ArrowUpRight, CircleCheck, Phone } from "lucide-react";
 import { BrandIcon } from "@/components/ui/SocialIcons";
-import { aluCategories, aluFeatured, aluImage, aluServices, aluWorks, getAluWork } from "@/data/aluminium";
+import { aluCategories, aluImage, aluServices } from "@/data/aluminium";
+import { getCatalog } from "@/lib/catalog";
 import { siteConfig } from "@/lib/config";
 import { tr, type Dictionary, type Locale } from "@/lib/i18n";
 import { telUrl, whatsappUrl } from "@/lib/utils";
@@ -10,10 +11,12 @@ import { AluHeading } from "./Shared";
 
 type Props = { lang: Locale; d: Dictionary };
 
-export function FeaturedProjects({ lang, d }: Props) {
+export async function FeaturedProjects({ lang, d }: Props) {
   const a = d.aluminium.projects;
-  const main = getAluWork(aluFeatured.main);
-  const side = aluFeatured.side.map(getAluWork);
+  const { works: aluWorks } = await getCatalog();
+  // Works marked "featured" in the admin panel first, topped up with the newest ones.
+  const [main, ...side] = [...aluWorks.filter((w) => w.featured), ...aluWorks.filter((w) => !w.featured)].slice(0, 4);
+  if (!main) return null;
   // Ticker of the systems we install (unique, from the works list).
   const systems = [...new Set([...aluServices.map((s) => tr(s.title, lang)), ...aluWorks.map((w) => tr(w.system, lang).split(" · ")[0])])];
 
@@ -29,7 +32,7 @@ export function FeaturedProjects({ lang, d }: Props) {
 
         <div className="mt-12 grid gap-5 lg:grid-cols-[1.65fr_1fr]">
           <a href="#works" className="group relative isolate flex min-h-[420px] flex-col justify-end overflow-hidden border border-white/10 p-6 sm:p-9 lg:min-h-[560px]">
-            <Image src={aluImage(main.slug)} alt={tr(main.title, lang)} fill sizes="(min-width: 1024px) 760px, 100vw" className="-z-10 object-cover transition duration-700 group-hover:scale-105" />
+            <Image src={main.image} alt={tr(main.title, lang)} fill sizes="(min-width: 1024px) 760px, 100vw" className="-z-10 object-cover transition duration-700 group-hover:scale-105" />
             <div className="absolute inset-0 -z-10 bg-linear-to-t from-navy via-navy/40 to-transparent" />
             <span className="mono-label absolute start-6 top-6 rounded-md bg-gold px-3 py-1.5 text-[10px] text-white sm:start-9 sm:top-9">{tr(aluCategories[main.category], lang)}</span>
             <h3 className="text-3xl font-extrabold tracking-tight sm:text-4xl">{tr(main.title, lang)}</h3>
@@ -39,7 +42,7 @@ export function FeaturedProjects({ lang, d }: Props) {
           <div className="grid gap-5">
             {side.map((w) => (
               <a key={w.slug} href="#works" className="group relative isolate flex min-h-[170px] flex-col justify-end overflow-hidden border border-white/10 p-5">
-                <Image src={aluImage(w.slug)} alt={tr(w.title, lang)} fill sizes="(min-width: 1024px) 460px, 100vw" className="-z-10 object-cover transition duration-700 group-hover:scale-105" />
+                <Image src={w.image} alt={tr(w.title, lang)} fill sizes="(min-width: 1024px) 460px, 100vw" className="-z-10 object-cover transition duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 -z-10 bg-linear-to-t from-navy via-navy/60 to-navy/5" />
                 <span className="mono-label absolute start-5 top-5 rounded-md bg-navy-3/90 px-2.5 py-1 text-[9px] text-white">{tr(aluCategories[w.category], lang)}</span>
                 <h3 className="text-xl font-extrabold">{tr(w.title, lang)}</h3>

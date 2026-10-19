@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useI18n } from "@/components/providers/I18nProvider";
 import { CloseButton, Modal } from "@/components/ui/Modal";
-import { aluCategories, aluImage, aluWorks, type AluCategory } from "@/data/aluminium";
+import { aluCategories, type AluCategory } from "@/data/aluminium";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { fill, tr, type Dictionary } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Polaroid } from "./Shared";
@@ -15,6 +16,7 @@ type Filter = "all" | AluCategory;
 
 export function ReferenceWall({ copy }: { copy: Dictionary["aluminium"]["wall"] }) {
   const { lang, t } = useI18n();
+  const { works: aluWorks } = useCatalog();
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<number | null>(null);
   const list = filter === "all" ? aluWorks : aluWorks.filter((w) => w.category === filter);
@@ -82,7 +84,7 @@ export function ReferenceWall({ copy }: { copy: Dictionary["aluminium"]["wall"] 
         {current && (
           <div className="relative flex h-[min(88dvh,920px)] flex-col">
             <div className="relative flex-1">
-              <Image key={current.slug} src={aluImage(current.slug)} alt={tr(current.title, lang)} fill sizes="100vw" className="animate-fade-in object-contain" />
+              <Image key={current.slug} src={current.image} alt={tr(current.title, lang)} fill sizes="100vw" className="animate-fade-in object-contain" />
               <button type="button" onClick={() => go(-1)} aria-label={copy.prev} className="absolute start-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-gold">
                 <ChevronLeft className="size-6 rtl:rotate-180" />
               </button>

@@ -7,7 +7,8 @@ import { useI18n } from "@/components/providers/I18nProvider";
 import { useStore } from "@/components/providers/StoreProvider";
 import { CloseButton, Modal } from "@/components/ui/Modal";
 import { Price } from "@/components/ui/Price";
-import { getProduct, productImage, type Product } from "@/data/products";
+import type { Product } from "@/data/products";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { href, tr } from "@/lib/i18n";
 import { productSpecs } from "@/lib/product-specs";
 import { cn } from "@/lib/utils";
@@ -22,7 +23,7 @@ function QuickViewBody({ product, onClose }: { product: Product; onClose: () => 
   return (
     <div className="grid md:grid-cols-2">
       <div className="relative aspect-[4/3] bg-sand md:aspect-auto md:min-h-[560px]">
-        <Image src={productImage(product.slug)} alt={tr(product.name, lang)} fill sizes="(min-width: 768px) 450px, 100vw" className="object-cover" />
+        <Image src={product.image} alt={tr(product.name, lang)} fill sizes="(min-width: 768px) 450px, 100vw" className="object-cover" />
       </div>
       <div className="p-6 sm:p-8">
         <CloseButton onClick={onClose} label={t.close} className="absolute end-4 top-4 z-10" />
@@ -78,6 +79,7 @@ function QuickViewBody({ product, onClose }: { product: Product; onClose: () => 
 export function QuickViewModal() {
   const { t } = useI18n();
   const { quickView, setQuickView } = useStore();
+  const { getProduct } = useCatalog();
   const product = quickView ? getProduct(quickView) : undefined;
   const close = () => setQuickView(null);
 

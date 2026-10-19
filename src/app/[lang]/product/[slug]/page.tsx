@@ -8,7 +8,8 @@ import { Breadcrumbs } from "@/components/ui/PageHero";
 import { Price } from "@/components/ui/Price";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { getCategory } from "@/data/categories";
-import { getProduct, productImage, products, productsInCategory } from "@/data/products";
+import { findProduct, inCategory } from "@/data/products";
+import { getCatalog } from "@/lib/catalog";
 import { siteConfig } from "@/lib/config";
 import { getDictionary } from "@/lib/dictionaries";
 import { fill, href, tr, type Locale } from "@/lib/i18n";
@@ -17,23 +18,21 @@ import { cn, formatMoney } from "@/lib/utils";
 
 type Props = { params: Promise<{ lang: Locale; slug: string }> };
 
-export const dynamicParams = false;
-export const generateStaticParams = () => products.map((p) => ({ slug: p.slug }));
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { lang, slug } = await params;
-  const product = getProduct(slug);
+  const product = findProduct((await getCatalog()).products, slug);
   if (!product) return {};
   return {
     title: tr(product.name, lang),
     description: tr(product.short, lang),
-    openGraph: { images: [productImage(product.slug)] },
+    openGraph: { images: [product.image] },
   };
 }
 
 export default async function ProductPage({ params }: Props) {
   const { lang, slug } = await params;
-  const product = getProduct(slug);
+  const { products } = await getCatalog();
+  const product = findProduct(products, slug);
   if (!product) notFound();
 
   const d = getDictionary(lang);
@@ -42,7 +41,7 @@ export default async function ProductPage({ params }: Props) {
   const parent = category.parent ? getCategory(category.parent) : undefined;
   const name = tr(product.name, lang);
   const specs = productSpecs(product, lang, t);
-  const related = productsInCategory(parent?.slug ?? category.slug)
+  const related = inCategory(products, parent?.slug ?? category.slug)
     .filter((p) => p.slug !== product.slug)
     .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
     .slice(0, 4);
@@ -66,7 +65,7 @@ export default async function ProductPage({ params }: Props) {
 
       <section className="container-x grid gap-10 py-10 lg:grid-cols-2 lg:gap-16 lg:py-16">
         <div className="lg:sticky lg:top-32 lg:self-start">
-          <ProductGallery src={productImage(product.slug)} alt={name} enlargeLabel={d.product.enlarge} />
+          <ProductGallery src={product.image} alt={name} enlargeLabel={d.product.enlarge} />
         </div>
 
         <div>
