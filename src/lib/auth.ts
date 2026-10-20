@@ -31,13 +31,13 @@ export async function clearSession() {
   (await cookies()).delete(COOKIE);
 }
 
-export async function getAdmin(): Promise<Admin | null> {
-  const raw = (await cookies()).get(COOKIE)?.value; // read first: marks the route as dynamic
+/** Checks a signed "<id>.<expires>.<signature>" cookie value and returns the admin it belongs to. */
+async function readSigned(raw: string | undefined, purpose: string): Promise<Admin | null> {
   if (!raw || !isDbConfigured()) return null;
   const [id, expires, signature] = raw.split(".");
   if (!id || !expires || !signature || Number(expires) < Date.now()) return null;
   try {
-    const expected = Buffer.from(await sign(`${id}.${expires}`));
+    const expected = Buffer.from(await sign(`${purpose}${id}.${expires}`));
     const given = Buffer.from(signature);
     if (expected.length !== given.length || !timingSafeEqual(expected, given)) return null;
     const rows = await query<RowDataPacket & Admin>("SELECT id, email FROM admins WHERE id = ?", [Number(id)]);
@@ -45,6 +45,35 @@ export async function getAdmin(): Promise<Admin | null> {
   } catch {
     return null;
   }
+}
+
+export async function getAdmin(): Promise<Admin | null> {
+  const raw = (await cookies()).get(COOKIE)?.value; // read first: marks the route as dynamic
+  return readSigned(raw, "");
+}
+
+/* Email verification step: password was correct, the emailed code is still pending (15 minutes). */
+const PENDING_COOKIE = "dak_pending";
+const PENDING_AGE = 15 * 60;
+const PENDING_PURPOSE = "pending:"; // different signature, so this cookie can never act as a session
+
+export async function setPendingLogin(adminId: number) {
+  const payload = `${adminId}.${Date.now() + PENDING_AGE * 1000}`;
+  (await cookies()).set(PENDING_COOKIE, `${payload}.${await sign(PENDING_PURPOSE + payload)}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: PENDING_AGE,
+  });
+}
+
+export async function getPendingLogin() {
+  return readSigned((await cookies()).get(PENDING_COOKIE)?.value, PENDING_PURPOSE);
+}
+
+export async function clearPendingLogin() {
+  (await cookies()).delete(PENDING_COOKIE);
 }
 
 /** Use at the top of every admin page and server action. */

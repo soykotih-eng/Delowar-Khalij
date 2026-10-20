@@ -3,6 +3,12 @@
 **Login:** https://delowaralkhalij.net/admin
 Use the email and password your developer gave you. Change the password after your first login (**Settings & QR code → Change password**).
 
+**Login code by email:** after the password, a **6-digit code** is sent to your login email. Type it on the "Check your email" page and press **Verify and sign in**.
+- The code works for 10 minutes. Check the spam folder if it does not arrive.
+- Didn't get it? Press **Send a new code** (once per minute).
+- You stay signed in for 7 days on each phone or computer, so you won't need a code every time.
+- Got a code you didn't ask for? Someone knows your password: change it right away.
+
 Works on phone and computer. Everything you save appears on the website immediately.
 
 ---
@@ -67,6 +73,12 @@ Page design, colours, new features, the fixed texts on the pages, contact detail
 
 **লগইন:** https://delowaralkhalij.net/admin
 ডেভেলপারের দেওয়া ইমেইল ও পাসওয়ার্ড দিয়ে ঢুকুন। প্রথমবার লগইনের পর **Settings & QR code → Change password** থেকে পাসওয়ার্ড বদলে নিন।
+
+**ইমেইলে লগইন কোড:** পাসওয়ার্ড দেওয়ার পর আপনার লগইন ইমেইলে একটা **৬ সংখ্যার কোড** যাবে। "Check your email" পেজে কোডটা লিখে **Verify and sign in** চাপুন।
+- কোড ১০ মিনিট কাজ করে। ইমেইল না পেলে spam ফোল্ডার দেখুন।
+- তবুও না পেলে **Send a new code** চাপুন (প্রতি মিনিটে একবার)।
+- একবার ঢুকলে ওই মোবাইল বা কম্পিউটারে ৭ দিন লগইন থাকবে, প্রতিবার কোড লাগবে না।
+- না চাইতেই কোড এলে বুঝবেন কেউ আপনার পাসওয়ার্ড জানে। সাথে সাথে পাসওয়ার্ড বদলান।
 
 মোবাইল ও কম্পিউটার দুটোতেই চলে। যা সেভ করবেন, সাথে সাথে ওয়েবসাইটে দেখাবে।
 

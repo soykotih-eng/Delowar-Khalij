@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Loaded from node_modules at runtime instead of being bundled (native / driver code).
-  serverExternalPackages: ["mysql2", "sharp"],
+  serverExternalPackages: ["mysql2", "sharp", "nodemailer"],
   experimental: {
     serverActions: {
       bodySizeLimit: "16mb", // admin photo uploads

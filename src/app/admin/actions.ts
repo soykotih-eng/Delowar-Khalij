@@ -7,9 +7,22 @@ import { redirect } from "next/navigation";
 import { colors, finishes, origins, units, usages } from "@/data/attributes";
 import { aluCategories } from "@/data/aluminium";
 import { categories } from "@/data/categories";
-import { clearFailures, clearSession, clientIp, createSession, isThrottled, recordFailure, requireAdmin } from "@/lib/auth";
+import {
+  clearFailures,
+  clearPendingLogin,
+  clearSession,
+  clientIp,
+  createSession,
+  getPendingLogin,
+  isThrottled,
+  recordFailure,
+  requireAdmin,
+  setPendingLogin,
+} from "@/lib/auth";
 import { CATALOG_TAG } from "@/lib/catalog";
 import { exec, isDbConfigured, query } from "@/lib/db";
+import { checkLoginCode, issueLoginCode, maskEmail } from "@/lib/login-code";
+import { isMailConfigured } from "@/lib/mailer";
 import { deleteImage, storeImage } from "@/lib/media";
 import { requestStatuses } from "@/lib/requests";
 
@@ -58,10 +71,10 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
 
   const email = text(form, "email", 190).toLowerCase();
   const password = String(form.get("password") ?? "");
-  let admin: (RowDataPacket & { id: number; password_hash: string }) | undefined;
+  let admin: (RowDataPacket & { id: number; email: string; password_hash: string }) | undefined;
   try {
-    [admin] = await query<RowDataPacket & { id: number; password_hash: string }>(
-      "SELECT id, password_hash FROM admins WHERE email = ?",
+    [admin] = await query<RowDataPacket & { id: number; email: string; password_hash: string }>(
+      "SELECT id, email, password_hash FROM admins WHERE email = ?",
       [email],
     );
   } catch (error) {
@@ -75,8 +88,55 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
     return { error: "Wrong email or password." };
   }
   clearFailures(ip);
+
+  // Email verification is active as soon as outgoing email (SMTP_*) is configured.
+  if (isMailConfigured()) {
+    try {
+      await issueLoginCode(admin, ip); // "recent" = a code from the last minute is still valid
+    } catch (error) {
+      console.error("[login] Could not send verification email:", error);
+      return { error: "Could not send the verification email. Please try again in a minute." };
+    }
+    await setPendingLogin(admin.id);
+    redirect("/admin/login/verify");
+  }
+
   await createSession(admin.id);
   redirect("/admin");
+}
+
+export async function verifyCodeAction(_prev: FormState, form: FormData): Promise<FormState> {
+  const pending = await getPendingLogin();
+  if (!pending) redirect("/admin/login");
+  const code = text(form, "code", 20).replace(/\D/g, "");
+  if (code.length !== 6) return { error: "Enter the 6-digit code from the email." };
+
+  const result = await checkLoginCode(pending.id, code);
+  if (result === "invalid") return { error: "Wrong code. Please check the email and try again." };
+  if (result === "locked") return { error: "Too many wrong codes. Press “Send a new code”." };
+  if (result === "expired") return { error: "This code has expired. Press “Send a new code”." };
+
+  await clearPendingLogin();
+  await createSession(pending.id);
+  redirect("/admin");
+}
+
+export async function resendCodeAction(_prev: FormState, _form: FormData): Promise<FormState> {
+  const pending = await getPendingLogin();
+  if (!pending) redirect("/admin/login");
+  try {
+    const result = await issueLoginCode(pending, await clientIp());
+    if (result === "recent") return { error: "A code was sent less than a minute ago. Please wait a moment." };
+  } catch (error) {
+    console.error("[login] Could not resend verification email:", error);
+    return { error: "Could not send the email. Please try again in a minute." };
+  }
+  return { ok: `A new code was sent to ${maskEmail(pending.email)}.` };
+}
+
+export async function cancelLoginAction() {
+  await clearPendingLogin();
+  redirect("/admin/login");
 }
 
 export async function logoutAction() {

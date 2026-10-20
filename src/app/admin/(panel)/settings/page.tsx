@@ -3,6 +3,8 @@ import { Card, PageHeader } from "@/components/admin/parts";
 import { PasswordForm } from "@/components/admin/PasswordForm";
 import { QrCard } from "@/components/admin/QrCard";
 import { requireAdmin } from "@/lib/auth";
+import { isMailConfigured } from "@/lib/mailer";
+import { ShieldCheck, ShieldAlert } from "lucide-react";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -19,6 +21,22 @@ export default async function SettingsPage() {
             <div className="max-w-md">
               <PasswordForm />
             </div>
+          </Card>
+          <Card>
+            {isMailConfigured() ? (
+              <h2 className="flex items-center gap-2 font-extrabold text-emerald-700">
+                <ShieldCheck className="size-5" /> Email verification is ON
+              </h2>
+            ) : (
+              <h2 className="flex items-center gap-2 font-extrabold text-amber-700">
+                <ShieldAlert className="size-5" /> Email verification is OFF
+              </h2>
+            )}
+            <p className="mt-2 text-sm leading-6 text-muted">
+              {isMailConfigured()
+                ? `After the password, a 6-digit code is sent to ${admin.email}. Logins stay active for 7 days on each device.`
+                : "Login only needs the password. Ask your developer to add the email settings (SMTP) to turn on login codes by email."}
+            </p>
           </Card>
           <Card>
             <h2 className="font-extrabold text-navy">Design, features & technical changes</h2>

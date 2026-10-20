@@ -42,6 +42,17 @@ npm run qr       # regenerate the QR code files in public/brand/ (optional: npm 
 3. **Redeploy.** On first start the app creates its tables, copies the starter catalogue and photos into the database, and creates the admin account. No manual SQL is needed.
 
 - **Forgotten owner password:** set a new `ADMIN_PASSWORD`, add `ADMIN_RESET=true`, redeploy, then remove `ADMIN_RESET`.
+- **Login code by email (2-step login):** turns on automatically once these variables are set (without them, login needs only the password):
+
+   | Variable | Hostinger email | Gmail |
+   | --- | --- | --- |
+   | `SMTP_HOST` | `smtp.hostinger.com` | `smtp.gmail.com` |
+   | `SMTP_PORT` | `465` | `465` |
+   | `SMTP_USER` | full mailbox, e.g. `no-reply@delowaralkhalij.net` | the Gmail address |
+   | `SMTP_PASS` | the mailbox password | a 16-character [App Password](https://myaccount.google.com/apppasswords) (needs Google 2-Step Verification) |
+   | `SMTP_FROM` | optional sender address (defaults to `SMTP_USER`) | |
+
+  The code goes to the admin's login email (`ADMIN_EMAIL`). It is valid for 10 minutes, allows 5 tries, and can be resent once a minute. If sending fails, the login page says so, and you can remove the `SMTP_` variables to fall back to password-only login.
 - **Without database variables** the site still works: it shows the starter catalogue from `src/data/` and `/admin` explains that the database is not connected.
 - Uploaded photos are stored in the database (table `media`, served at `/media/<id>`) because Hostinger replaces the app folder on every deploy. Back up the database from hPanel regularly.
 
